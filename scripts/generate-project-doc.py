@@ -175,6 +175,7 @@ def build_document():
             ("5.2", "Problem Statement", ""),
             ("5.3", "Objectives", ""),
             ("5.4", "Scope of the Project", ""),
+            ("5.5", "Key Features and System Capabilities", ""),
             ("6", "System Analysis", ""),
             ("6.1", "Existing System", ""),
             ("6.2", "Proposed System", ""),
@@ -196,13 +197,13 @@ def build_document():
     add_section_heading(doc, "ABSTRACT")
     add_body(
         doc,
-        "DriveEase is a web-based car rental application developed as a proof-of-concept "
-        "(POC) using Next.js 14 with the App Router. The system allows visitors to browse "
-        "a catalog of rental cars, apply filters by name, fuel type, seats, and price, and "
-        "Registered users authenticate with Supabase Auth, book cars by selecting pickup "
-        "and return dates, and view their booking history. Administrators access a "
-        "dedicated panel to view dashboard statistics, manage the car fleet (create, "
-        "update, delete), and update booking statuses.",
+        "DriveEase is a web-based car rental application built with Next.js 14 (App Router) "
+        "and Supabase as the backend platform. The system allows visitors to browse a catalog "
+        "of rental cars, apply filters by name, fuel type, seats, and price, and view detailed "
+        "car information. Registered users authenticate through Supabase Auth, book cars by "
+        "selecting pickup and return dates, and view their booking history. Administrators "
+        "access a dedicated panel to view dashboard statistics, manage the car fleet, and "
+        "update booking statuses.",
     )
     add_body(
         doc,
@@ -215,8 +216,16 @@ def build_document():
     add_body(
         doc,
         "All data fetching and mutations run on the Next.js server via Server Components "
-        "and Server Actions. The application supports local development and deployment "
-        "to Vercel with environment-based Supabase configuration.",
+        "and Server Actions. The client browser communicates only with the Next.js "
+        "application and does not make direct network requests to Supabase.",
+    )
+    add_body(
+        doc,
+        "The application supports local development, automated testing with Vitest and "
+        "Playwright, and cloud deployment to Vercel with environment-based Supabase "
+        "configuration. DriveEase is designed as a production-style full-stack web "
+        "application suitable for academic evaluation, portfolio presentation, and live "
+        "demonstration on a cloud-hosted URL.",
     )
     add_page_break(doc)
 
@@ -234,8 +243,8 @@ def build_document():
     add_body(
         doc,
         "Modern full-stack frameworks such as Next.js enable rapid development of such "
-        "applications with server-side rendering, API routes, and integrated authentication "
-        "patterns suitable for proof-of-concept and prototype deployments.",
+        "applications with server-side rendering, Server Actions, and integrated "
+        "authentication backed by Supabase PostgreSQL and Row Level Security.",
     )
 
     add_subheading(doc, "5.2 Problem Statement")
@@ -250,22 +259,44 @@ def build_document():
     add_body(
         doc,
         "There is a need for a structured web application that demonstrates the core flows "
-        "of an online car rental service: catalog discovery, user authentication, booking "
-        "management, and administrative control.",
+        "of an online car rental service: catalog discovery, secure user authentication, "
+        "database-backed booking management, and administrative control — backed by "
+        "Supabase PostgreSQL and deployable to a cloud hosting platform such as Vercel.",
     )
 
     add_subheading(doc, "5.3 Objectives")
     objectives = [
-        "Build a responsive web application shell with navigation, home page, and mobile-friendly layout (Phase 1).",
-        "Implement a car catalog with search and filter capabilities and individual car detail pages (Phase 2).",
-        "Provide Supabase Auth login with user and admin roles, session cookies, and protected routes (Phase 3).",
-        "Enable authenticated users to create bookings with date selection and automatic price calculation, and view their booking history (Phase 4).",
-        "Deliver an admin panel with dashboard statistics, cars CRUD, and booking status management (Phase 5).",
-        "Apply UX polish including loading skeletons, error pages, toast notifications, and empty states (Phase 6).",
-        "Integrate Supabase PostgreSQL for cars, bookings, and profiles with RLS policies (Backend Integration).",
+        "Application shell: responsive navigation, footer, home hero, and mobile-friendly layout.",
+        "Vehicle catalog: search and filter capabilities, detail pages with image galleries, data in Supabase.",
+        "Authentication: Supabase Auth login with user and admin roles, session cookies, and protected routes.",
+        "Booking workflow: date selection, automatic price calculation, and personal booking history in Supabase.",
+        "Administration: dashboard statistics, cars CRUD, and booking status management.",
+        "User experience: loading skeletons, custom 404, toast notifications, and empty states.",
+        "Cloud-ready backend: Supabase PostgreSQL with RLS, server-side data access, schema setup, and seed script.",
     ]
     for obj in objectives:
         add_bullet(doc, obj)
+
+    add_subheading(doc, "5.5 Key Features and System Capabilities")
+    add_table(
+        doc,
+        ["Module", "Capability", "Technology"],
+        [
+            ("Layout", "Navbar, footer, mobile nav, home hero", "Next.js, Tailwind, shadcn/ui"),
+            ("Catalog", "Ten-vehicle grid, search/filter, detail galleries", "Supabase cars table"),
+            ("Authentication", "Email/password login, role redirect, session cookies", "Supabase Auth, @supabase/ssr"),
+            ("Booking", "Date selection, price calculation, booking history", "Supabase bookings table"),
+            ("Administration", "Dashboard, cars CRUD, booking status", "RLS admin policies"),
+            ("Backend", "PostgreSQL, RLS, seed script, server-side queries", "Supabase cloud"),
+        ],
+    )
+    add_body(
+        doc,
+        "Public catalog pages load car data from Supabase on the server. Authenticated users "
+        "book vehicles with RLS-scoped inserts. Administrators manage fleet and bookings "
+        "through role-enforced middleware and database policies. All Supabase communication "
+        "runs on the Next.js server; the browser interacts only with the application domain.",
+    )
 
     add_subheading(doc, "5.4 Scope of the Project")
     add_body(
@@ -314,6 +345,18 @@ def build_document():
     add_bullet(doc, "Technical feasibility: Next.js 14, React 18, TypeScript, and Supabase provide a mature full-stack ecosystem.")
     add_bullet(doc, "Operational feasibility: Seeded demo credentials allow immediate testing via Supabase Auth.")
     add_bullet(doc, "Economic feasibility: Open-source stack with Supabase free tier for development and deployment.")
+    add_bullet(doc, "Operational readiness: Modular separation of presentation, business logic, and Supabase integration supports independent testing and Vercel deployment via environment variables.")
+
+    add_subheading(doc, "6.5 Context Diagram and Data Flow")
+    add_body(
+        doc,
+        "Visitors and users interact with the Next.js application through a web browser. "
+        "The Next.js server handles page rendering, Server Actions, and middleware session "
+        "refresh. All database and authentication calls go from Next.js to Supabase Cloud. "
+        "For catalog reads, Server Components query the cars table and render HTML. For "
+        "bookings, Server Actions insert rows with the authenticated user UUID. The browser "
+        "Network tab shows requests only to the application domain, not to supabase.co.",
+    )
     add_page_break(doc)
 
     # SYSTEM SPECIFICATION
@@ -347,15 +390,15 @@ def build_document():
     add_subheading(doc, "7.3 Functional Requirements")
     add_table(
         doc,
-        ["Phase", "Requirement", "Status"],
+        ["Module", "Requirement", "Status"],
         [
-            ("1", "Navbar, Footer, mobile nav, home hero", "Implemented"),
-            ("2", "Car catalog from Supabase, grid, search/filter, detail page", "Implemented"),
-            ("3", "Supabase Auth login, session cookies, middleware guards", "Implemented"),
-            ("4", "Booking form, price calculation, my bookings page", "Implemented"),
-            ("5", "Admin dashboard, cars CRUD, booking status updates", "Implemented"),
-            ("6", "Loading skeletons, 404 page, toasts, empty states, README", "Implemented"),
-            ("Backend", "Supabase schema, RLS, seed script, server data layer", "Implemented"),
+            ("Layout", "Navbar, Footer, mobile nav, home hero", "Implemented"),
+            ("Catalog", "Car catalog from Supabase, grid, search/filter, detail page", "Implemented"),
+            ("Authentication", "Supabase Auth login, session cookies, middleware guards", "Implemented"),
+            ("Booking", "Booking form, price calculation, my bookings page", "Implemented"),
+            ("Administration", "Admin dashboard, cars CRUD, booking status updates", "Implemented"),
+            ("User Experience", "Loading skeletons, 404 page, toasts, empty states", "Implemented"),
+            ("Database & Security", "Supabase schema, RLS, seed script, server data layer", "Implemented"),
         ],
     )
 
@@ -364,6 +407,14 @@ def build_document():
     add_bullet(doc, "Server-side data access: all Supabase queries run on the Next.js server.")
     add_bullet(doc, "Server-side validation for booking dates, credentials, and admin mutations.")
     add_bullet(doc, "Semantic HTML and ARIA attributes for accessibility.")
+    add_bullet(doc, "Production security: hashed passwords via Supabase Auth, HTTP-only cookies, admin role in JWT app_metadata enforced at middleware and RLS.")
+    add_bullet(doc, "Deployment readiness: builds with npm run build; Vercel runtime requires only NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.")
+
+    add_subheading(doc, "7.5 Constraints and Assumptions")
+    add_bullet(doc, "Demo accounts are pre-seeded; no public registration page.")
+    add_bullet(doc, "Car images use external URLs; Supabase Storage not used.")
+    add_bullet(doc, "Availability checks use car.available flag only, not date overlap.")
+    add_bullet(doc, "Assumes Supabase migrations applied and npm run seed executed before testing.")
     add_page_break(doc)
 
     # SOFTWARE DESCRIPTION
@@ -401,6 +452,13 @@ def build_document():
         "Server Actions in app/actions/ handle mutations (login, logout, create booking, "
         "admin CRUD) by calling Supabase on the server with the user's session cookie.",
     )
+    add_body(
+        doc,
+        "Three-tier request flow: the browser sends HTTP requests only to Next.js (Vercel or "
+        "localhost). Server Components and Server Actions invoke Supabase clients to read or "
+        "write PostgreSQL data and manage Auth sessions. Supabase returns results to the server, "
+        "which renders HTML or redirects the browser.",
+    )
 
     add_subheading(doc, "8.3 Key Modules")
     add_table(
@@ -418,6 +476,41 @@ def build_document():
             ("Admin auth", "lib/admin-auth.ts", "Layout-level admin guard"),
             ("Middleware", "middleware.ts", "Session refresh and route protection"),
             ("Seed script", "scripts/seed-supabase.ts", "Seed demo users, cars, bookings"),
+        ],
+    )
+
+    add_subheading(doc, "8.4 Server-Side vs Client-Side Responsibilities")
+    add_body(
+        doc,
+        "The browser never communicates directly with Supabase. Server Components and "
+        "Server Actions fetch and mutate data. Client components handle form UI, in-memory "
+        "catalog filtering, and toast notifications only.",
+    )
+    add_table(
+        doc,
+        ["Task", "Runs on"],
+        [
+            ("Load car catalog", "Server"),
+            ("Load user bookings", "Server"),
+            ("Login and logout", "Server Action"),
+            ("Create booking", "Server Action"),
+            ("Admin car CRUD", "Server Action"),
+            ("Filter cars by fuel/price", "Client (in-memory)"),
+        ],
+    )
+
+    add_subheading(doc, "8.5 Server Actions Reference")
+    add_table(
+        doc,
+        ["Action", "File", "Effect"],
+        [
+            ("loginAction", "app/actions/auth.ts", "Supabase sign-in; role redirect"),
+            ("logoutAction", "app/actions/auth.ts", "Supabase sign-out"),
+            ("createBookingAction", "app/actions/booking.ts", "Insert booking row"),
+            ("createCarAction", "app/actions/admin.ts", "Insert car (admin)"),
+            ("updateCarAction", "app/actions/admin.ts", "Update car (admin)"),
+            ("deleteCarAction", "app/actions/admin.ts", "Delete car (admin)"),
+            ("updateBookingStatusAction", "app/actions/admin.ts", "Update status (admin)"),
         ],
     )
     add_page_break(doc)
@@ -441,6 +534,14 @@ def build_document():
         ],
     )
 
+    add_body(
+        doc,
+        "Public routes (/, /cars, /cars/[id]) load catalog data without authentication. "
+        "Auth routes (/login) redirect signed-in users by role. User routes (/cars/[id]/book, "
+        "/my-bookings) require middleware session validation. Admin routes (/admin/*) require "
+        "app_metadata.role = admin.",
+    )
+
     add_subheading(doc, "9.2 Data Model (Supabase PostgreSQL)")
     add_bullet(doc, "auth.users: managed by Supabase Auth; role in app_metadata (user | admin)")
     add_bullet(doc, "profiles: id (uuid), name, email, created_at")
@@ -448,18 +549,17 @@ def build_document():
     add_bullet(doc, "bookings: id, user_id, car_id, pickup_date, return_date, total_price, status")
     add_body(doc, "RLS: public car SELECT; users manage own bookings; admins manage cars and all bookings.")
 
-    add_subheading(doc, "9.3 Phase-wise Implementation")
-    phases = [
-        "Phase 1 — Layout shell: Root layout with Navbar, Footer, AuthProvider, and Sonner toast provider.",
-        "Phase 2 — Catalog: CarsCatalog component with responsive grid, filters, and empty state.",
-        "Phase 3 — Authentication: /login uses supabase.auth.signInWithPassword; session in HTTP-only cookies via @supabase/ssr.",
-        "Phase 4 — Booking: createBookingAction inserts into Supabase bookings table.",
-        "Phase 5 — Admin: Dashboard, cars CRUD, and booking status management via Supabase.",
-        "Phase 6 — Polish: Loading skeletons, custom 404, toast notifications, and empty states.",
-        "Backend Integration — Supabase: PostgreSQL schema, RLS, seed script; removed JSON file storage.",
+    add_subheading(doc, "9.3 Application Modules and Features")
+    modules = [
+        "Layout Shell: Root layout with Navbar, Footer, AuthProvider, and Sonner toast provider.",
+        "Vehicle Catalog: CarsCatalog with responsive grid, filters, CarCard, and CarImageGallery.",
+        "Authentication: /login uses supabase.auth.signInWithPassword; session in HTTP-only cookies via @supabase/ssr.",
+        "Booking Workflow: createBookingAction inserts into Supabase bookings; my bookings lists user reservations.",
+        "Administration: Dashboard, cars CRUD, and booking status management via Supabase.",
+        "User Experience: Loading skeletons, custom 404, toast notifications, and empty states.",
     ]
-    for phase in phases:
-        add_bullet(doc, phase)
+    for mod in modules:
+        add_bullet(doc, mod)
 
     add_subheading(doc, "9.4 Authentication and Security")
     add_bullet(doc, "Supabase Auth handles email/password sign-in and sign-out.")
@@ -491,6 +591,55 @@ def build_document():
         "Admin car changes reflect immediately on the public catalog because both read and "
         "write use the same Supabase cars table.",
     )
+
+    add_subheading(doc, "9.7 Supabase Backend Architecture")
+    add_body(
+        doc,
+        "DriveEase persists all application data in Supabase PostgreSQL and authenticates "
+        "users through Supabase Auth. Tables profiles, cars, and bookings are linked by "
+        "foreign keys and protected by Row Level Security policies.",
+    )
+    add_bullet(doc, "lib/supabase/server.ts — cookie-aware client for Server Components and Actions.")
+    add_bullet(doc, "lib/supabase/middleware.ts — refreshes auth tokens on each request.")
+    add_bullet(doc, "lib/supabase/admin.ts — service-role client for npm run seed only.")
+    add_bullet(doc, "supabase/migrations/ — initial schema setup SQL for greenfield installation.")
+    add_bullet(doc, "scripts/seed-supabase.ts — creates demo users, ten cars, and sample bookings.")
+    add_body(
+        doc,
+        "Environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY "
+        "(required at runtime); SUPABASE_SERVICE_ROLE_KEY (local seed script only).",
+    )
+
+    add_subheading(doc, "9.8 Database Schema and Row Level Security")
+    add_bullet(doc, "profiles: users read/update own row; admins read all profiles.")
+    add_bullet(doc, "cars: public SELECT for catalog; admin-only INSERT, UPDATE, DELETE.")
+    add_bullet(doc, "bookings: users SELECT and INSERT own rows; admins SELECT and UPDATE all.")
+    add_body(
+        doc,
+        "Admin role checks use auth.jwt() app_metadata.role = admin. Profile auto-creation "
+        "trigger runs on new auth.users insert for future registration support.",
+    )
+
+    add_subheading(doc, "9.9 User Interface Components")
+    add_table(
+        doc,
+        ["Component", "Type", "Responsibility"],
+        [
+            ("Navbar", "Client", "Navigation, user greeting, logout"),
+            ("CarsCatalog", "Client", "Filter controls and car grid"),
+            ("CarCard", "Server", "Individual car summary card"),
+            ("LoginForm", "Client", "Email/password form with error alert"),
+            ("CarBookingForm", "Client", "Date pickers and booking submit"),
+            ("AdminNav", "Client", "Admin sidebar navigation"),
+        ],
+    )
+
+    add_subheading(doc, "9.10 Validation and Error Handling")
+    add_bullet(doc, "Invalid login credentials show generic error without revealing which field failed.")
+    add_bullet(doc, "Booking rejects invalid dates, unavailable cars, and unauthenticated sessions.")
+    add_bullet(doc, "Admin actions validate role, record existence, and allowed status values.")
+    add_bullet(doc, "Empty filter results and empty booking lists show dedicated empty states.")
+    add_bullet(doc, "Expired session on protected routes redirects to login; non-admin users blocked from /admin/*.")
     add_page_break(doc)
 
     # SYSTEM TESTING
@@ -537,6 +686,20 @@ def build_document():
     ]
     for item in checklist:
         add_bullet(doc, item)
+
+    add_subheading(doc, "10.4 Sample Test Cases")
+    add_table(
+        doc,
+        ["TC ID", "Module", "Expected Result"],
+        [
+            ("TC-01", "Catalog", "10 cars displayed on /cars"),
+            ("TC-03", "Auth", "Wrong password shows error alert"),
+            ("TC-05", "Auth", "Admin login redirects to dashboard"),
+            ("TC-07", "Guard", "User blocked from /admin/cars"),
+            ("TC-08", "Booking", "3-day rental computes correct total price"),
+            ("TC-11", "Admin", "Deleted car removed from catalog"),
+        ],
+    )
     add_page_break(doc)
 
     # SYSTEM IMPLEMENTATION
@@ -563,7 +726,6 @@ def build_document():
 ├── scripts/                # Seed script and seed data
 ├── supabase/migrations/    # Postgres schema and RLS SQL
 ├── e2e/                    # Playwright end-to-end tests
-├── projectplan/            # Phase documentation
 ├── docs/                   # Project reports
 └── middleware.ts           # Session refresh and route protection"""
     add_body(doc, structure)
@@ -573,6 +735,33 @@ def build_document():
     add_body(doc, "npm run build — Production build")
     add_body(doc, "npm start — Start production server")
     add_body(doc, "Vercel: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY; add site URL in Supabase Auth settings.")
+
+    add_subheading(doc, "11.4 Supabase Project Setup")
+    setup_steps = [
+        "Create Supabase account and new project.",
+        "Run SQL migrations from supabase/migrations/ in SQL Editor.",
+        "Copy Project URL, anon key, and service role key to .env.local.",
+        "Run npm run seed to create demo users, cars, and bookings.",
+        "Configure Auth redirect URLs for localhost and Vercel domain.",
+    ]
+    for step in setup_steps:
+        add_bullet(doc, step)
+
+    add_subheading(doc, "11.5 Vercel Deployment Guide")
+    add_bullet(doc, "Import GitHub repository into Vercel.")
+    add_bullet(doc, "Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY env vars.")
+    add_bullet(doc, "Do not add SUPABASE_SERVICE_ROLE_KEY to Vercel.")
+    add_bullet(doc, "Add Vercel URL to Supabase Auth allowed redirect URLs.")
+    add_bullet(doc, "Deploy and verify login, catalog, booking, and admin flows.")
+
+    add_subheading(doc, "11.6 Network Privacy (Browser vs Server)")
+    add_body(
+        doc,
+        "DriveEase ensures the browser does not expose Supabase API traffic. All database "
+        "queries and authentication API calls execute on the Next.js server. The browser "
+        "Network tab shows requests only to the application domain. Session cookies are "
+        "HTTP-only. External requests are primarily Unsplash image URLs for car photos.",
+    )
     add_page_break(doc)
 
     # CONCLUSION
@@ -580,22 +769,30 @@ def build_document():
     add_subheading(doc, "Conclusion")
     add_body(
         doc,
-        "DriveEase successfully implements a full-stack car rental application across six "
-        "phases plus Supabase backend integration. The application delivers a complete "
-        "customer journey from browsing the fleet through authenticated booking and "
-        "viewing reservations, as well as a full admin workflow backed by Supabase "
-        "PostgreSQL and real authentication.",
+        "DriveEase successfully implements a full-stack car rental application with a complete "
+        "customer journey from browsing the fleet through Supabase-authenticated booking and "
+        "viewing reservations, as well as a full admin workflow backed by PostgreSQL.",
+    )
+    add_body(
+        doc,
+        "The system uses industry-standard authentication with hashed passwords, database-enforced "
+        "Row Level Security, and server-side Supabase data access suitable for cloud deployment "
+        "on Vercel. Unit tests validate booking math and catalog filters; end-to-end tests cover "
+        "authentication guards, booking flows, and admin operations.",
     )
 
     add_subheading(doc, "Future Enhancements")
     future = [
-        "User registration: Add sign-up page and email confirmation via Supabase Auth.",
-        "Payment gateway: Integrate Stripe or Razorpay for online payment.",
-        "Email notifications: Booking confirmation and reminder emails.",
-        "Availability calendar: Block dates when cars are already booked.",
-        "Image upload: Use Supabase Storage for admin car photos.",
-        "OAuth providers: Add Google or GitHub login via Supabase Auth.",
-        "CI/CD pipeline: Automated tests and deployment on pull requests.",
+        "User registration with email confirmation via Supabase Auth.",
+        "Payment gateway integration (Stripe or Razorpay).",
+        "Email booking confirmations via Edge Functions.",
+        "Date-range availability blocking for overlapping bookings.",
+        "Supabase Storage for admin car photo uploads.",
+        "OAuth login (Google, GitHub).",
+        "Audit logging for admin mutations.",
+        "CI/CD pipeline with automated tests on pull requests.",
+        "Dashboard analytics charts for booking trends.",
+        "Multi-location pickup/drop-off support.",
     ]
     for item in future:
         add_bullet(doc, item)
@@ -621,7 +818,20 @@ def build_document():
     add_body(doc, "cars: id bigserial PK, name, seats, fuel, price, available, images text[], description")
     add_body(doc, "bookings: id bigserial PK, user_id uuid, car_id bigint, pickup_date, return_date, total_price, status")
 
-    add_subheading(doc, "Appendix C — Environment Variables")
+    add_subheading(doc, "Appendix C — Row Level Security Policy Matrix")
+    add_table(
+        doc,
+        ["Table", "Operation", "Who"],
+        [
+            ("profiles", "SELECT", "own user or admin"),
+            ("cars", "SELECT", "everyone (anon + auth)"),
+            ("cars", "INSERT/UPDATE/DELETE", "admin only"),
+            ("bookings", "SELECT/INSERT", "own user"),
+            ("bookings", "SELECT/UPDATE", "admin (all rows)"),
+        ],
+    )
+
+    add_subheading(doc, "Appendix D — Environment Variables")
     add_table(
         doc,
         ["Variable", "Required", "Purpose"],
@@ -632,7 +842,26 @@ def build_document():
         ],
     )
 
-    add_subheading(doc, "Appendix D — Screenshot Placeholders")
+    add_subheading(doc, "Appendix E — Server Actions Summary")
+    add_table(
+        doc,
+        ["Action", "Auth", "Supabase operation"],
+        [
+            ("loginAction", "No", "auth.signInWithPassword"),
+            ("logoutAction", "Yes", "auth.signOut"),
+            ("createBookingAction", "Yes", "INSERT bookings"),
+            ("createCarAction", "Admin", "INSERT cars"),
+            ("updateBookingStatusAction", "Admin", "UPDATE bookings"),
+        ],
+    )
+
+    add_subheading(doc, "Appendix F — Seeded Demo Data")
+    add_bullet(doc, "10 cars (IDs 1–10) with mixed fuel types; Ford EcoSport unavailable.")
+    add_bullet(doc, "2 users: user@gmail.com (user), admin@gmail.com (admin).")
+    add_bullet(doc, "2 sample bookings for demo user.")
+    add_bullet(doc, "Fuel breakdown: 4 Petrol, 3 Diesel, 2 Electric, 1 Hybrid.")
+
+    add_subheading(doc, "Appendix G — Screenshot Placeholders")
     screenshots = [
         "Home page — hero section with Browse Cars button",
         "Cars listing — grid with filters",
@@ -640,11 +869,26 @@ def build_document():
         "Login page — email and password form",
         "My Bookings — user booking table",
         "Admin Dashboard — statistics cards",
+        "Admin Cars — inventory table with create form",
+        "Admin Bookings — status dropdown",
+        "Vercel deployment — production URL",
+        "Supabase dashboard — Table Editor showing cars",
     ]
     for i, s in enumerate(screenshots, 1):
         add_bullet(doc, f"{i}. {s}")
 
-    add_subheading(doc, "Appendix E — npm Scripts Reference")
+    add_subheading(doc, "Appendix H — Glossary")
+    glossary = [
+        "RLS — Row Level Security; PostgreSQL row filtering per user",
+        "Server Component — React component rendered on the Next.js server",
+        "Server Action — Server-side mutation invoked from client forms",
+        "JWT — JSON Web Token used by Supabase Auth for session claims",
+        "UUID — Unique identifier for Supabase auth user IDs",
+    ]
+    for item in glossary:
+        add_bullet(doc, item)
+
+    add_subheading(doc, "Appendix I — npm Scripts Reference")
     add_table(
         doc,
         ["Command", "Description"],
@@ -668,12 +912,14 @@ def build_document():
         "TypeScript Documentation — https://www.typescriptlang.org/docs",
         "Supabase Documentation — https://supabase.com/docs",
         "Supabase Auth with Next.js — https://supabase.com/docs/guides/auth/server-side/nextjs",
+        "Supabase Row Level Security — https://supabase.com/docs/guides/database/postgres/row-level-security",
         "Tailwind CSS Documentation — https://tailwindcss.com/docs",
         "shadcn/ui — https://ui.shadcn.com",
         "Sonner Toast Library — https://sonner.emilkowal.ski",
         "Vitest — https://vitest.dev",
         "Playwright — https://playwright.dev",
         "Vercel Deployment — https://vercel.com/docs",
+        "PostgreSQL Documentation — https://www.postgresql.org/docs/",
         "MDN Web Docs — https://developer.mozilla.org",
     ]
     for i, ref in enumerate(refs, 1):
@@ -685,8 +931,16 @@ def build_document():
 def main():
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     doc = build_document()
-    doc.save(str(OUTPUT))
-    print(f"Generated: {OUTPUT}")
+    try:
+        doc.save(str(OUTPUT))
+        print(f"Generated: {OUTPUT}")
+    except PermissionError:
+        fallback = OUTPUT.with_name(f"{OUTPUT.stem}-temp{OUTPUT.suffix}")
+        doc.save(str(fallback))
+        print(
+            f"Could not overwrite {OUTPUT} (file may be open in Word). "
+            f"Generated: {fallback}"
+        )
 
 
 if __name__ == "__main__":
