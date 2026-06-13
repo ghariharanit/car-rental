@@ -1,13 +1,7 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  createSessionCookieValue,
-  verifyCredentials,
-  SESSION_COOKIE_NAME,
-  SESSION_MAX_AGE,
-} from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
 function safeCallbackUrl(raw: string | null | undefined): string | null {
   if (!raw || typeof raw !== "string") return null;
@@ -29,21 +23,21 @@ export async function loginAction(formData: FormData): Promise<{
   const callbackRaw = String(formData.get("callbackUrl") ?? "").trim();
   const callback = safeCallbackUrl(callbackRaw);
 
-  const user = verifyCredentials(email, password);
-  if (!user) {
+  const supabase = createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
     return { error: "Invalid email or password." };
   }
 
-  const token = await createSessionCookieValue(user);
-  cookies().set(SESSION_COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_MAX_AGE,
-  });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (user.role === "admin") {
+  const role =
+    user?.app_metadata?.role === "admin" ? "admin" : "user";
+
+  if (role === "admin") {
     redirect(withQuery("/admin/dashboard", "loggedIn", "1"));
   }
 
@@ -52,6 +46,7 @@ export async function loginAction(formData: FormData): Promise<{
 }
 
 export async function logoutAction(): Promise<void> {
-  cookies().delete(SESSION_COOKIE_NAME);
+  const supabase = createClient();
+  await supabase.auth.signOut();
   redirect("/?loggedOut=1");
 }

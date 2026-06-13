@@ -24,7 +24,7 @@ export async function createBookingAction(
     return { error: "Invalid car." };
   }
 
-  const car = getCarById(carId);
+  const car = await getCarById(carId);
   if (!car) {
     return { error: "Car not found." };
   }
@@ -39,7 +39,7 @@ export async function createBookingAction(
     };
   }
 
-  appendBooking({
+  await appendBooking({
     userId: user.id,
     carId,
     pickupDate,

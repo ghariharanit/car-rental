@@ -1,67 +1,109 @@
-import fs from "node:fs";
-import path from "node:path";
-import type { Car } from "@/lib/data";
+import { createClient } from "@/lib/supabase/server";
+import type { Car } from "@/lib/car-catalog";
+import { mapCarRow } from "@/lib/car-catalog";
 
-const CARS_FILE = path.join(process.cwd(), "data", "cars.json");
+export async function readCars(): Promise<Car[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("cars")
+    .select("*")
+    .order("id");
 
-function writeCars(cars: Car[]) {
-  fs.writeFileSync(CARS_FILE, `${JSON.stringify(cars, null, 2)}\n`, "utf-8");
-}
-
-export function readCars(): Car[] {
-  const raw = fs.readFileSync(CARS_FILE, "utf-8");
-  const data = JSON.parse(raw) as unknown;
-  if (!Array.isArray(data)) {
-    return [];
-  }
-  return data as Car[];
-}
-
-export function getCarForAdmin(id: number): Car | undefined {
-  return readCars().find((car) => car.id === id);
-}
-
-export function createCar(input: Omit<Car, "id">): Car {
-  const cars = readCars();
-  const nextId = cars.length ? Math.max(...cars.map((car) => car.id)) + 1 : 1;
-  const created: Car = { id: nextId, ...input };
-  cars.push(created);
-  writeCars(cars);
-  return created;
-}
-
-export function updateCar(id: number, input: Omit<Car, "id">): Car | null {
-  const cars = readCars();
-  const index = cars.findIndex((car) => car.id === id);
-  if (index === -1) {
-    return null;
+  if (error) {
+    throw new Error(`Failed to load cars: ${error.message}`);
   }
 
-  const updated: Car = { id, ...input };
-  cars[index] = updated;
-  writeCars(cars);
-  return updated;
+  return (data ?? []).map(mapCarRow);
 }
 
-export function deleteCar(id: number): boolean {
-  const cars = readCars();
-  const next = cars.filter((car) => car.id !== id);
+export async function getCarForAdmin(id: number): Promise<Car | undefined> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("cars")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
 
-  if (next.length === cars.length) {
-    return false;
+  if (error) {
+    throw new Error(`Failed to load car: ${error.message}`);
   }
 
-  writeCars(next);
-  return true;
+  return data ? mapCarRow(data) : undefined;
 }
 
-export function getCarStats() {
-  const cars = readCars();
-  const availableCars = cars.filter((car) => car.available).length;
+export async function createCar(input: Omit<Car, "id">): Promise<Car> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("cars")
+    .insert(input)
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Failed to create car: ${error?.message ?? "unknown"}`);
+  }
+
+  return mapCarRow(data);
+}
+
+export async function updateCar(
+  id: number,
+  input: Omit<Car, "id">
+): Promise<Car | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("cars")
+    .update(input)
+    .eq("id", id)
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to update car: ${error.message}`);
+  }
+
+  return data ? mapCarRow(data) : null;
+}
+
+export async function deleteCar(id: number): Promise<boolean> {
+  const supabase = createClient();
+  const { error, count } = await supabase
+    .from("cars")
+    .delete({ count: "exact" })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(`Failed to delete car: ${error.message}`);
+  }
+
+  return (count ?? 0) > 0;
+}
+
+export async function getCarStats() {
+  const supabase = createClient();
+  const { count: totalCars, error: totalError } = await supabase
+    .from("cars")
+    .select("*", { count: "exact", head: true });
+
+  if (totalError) {
+    throw new Error(`Failed to count cars: ${totalError.message}`);
+  }
+
+  const { count: availableCars, error: availableError } = await supabase
+    .from("cars")
+    .select("*", { count: "exact", head: true })
+    .eq("available", true);
+
+  if (availableError) {
+    throw new Error(`Failed to count available cars: ${availableError.message}`);
+  }
+
+  const total = totalCars ?? 0;
+  const available = availableCars ?? 0;
 
   return {
-    totalCars: cars.length,
-    availableCars,
-    unavailableCars: cars.length - availableCars,
+    totalCars: total,
+    availableCars: available,
+    unavailableCars: total - available,
   };
 }

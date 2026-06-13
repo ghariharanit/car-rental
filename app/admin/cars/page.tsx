@@ -170,9 +170,11 @@ export default async function AdminCarsPage({
 }) {
   await requireAdminUser();
 
-  const cars = readCars();
+  const cars = await readCars();
   const editId = Number.parseInt(searchParams?.edit ?? "", 10);
-  const selectedCar = Number.isFinite(editId) ? getCarForAdmin(editId) : undefined;
+  const selectedCar = Number.isFinite(editId)
+    ? await getCarForAdmin(editId)
+    : undefined;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12">
@@ -180,7 +182,7 @@ export default async function AdminCarsPage({
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Manage cars</h1>
           <p className="mt-3 max-w-2xl text-muted-foreground">
-            Create, edit, or remove cars persisted to <code>data/cars.json</code>.
+            Create, edit, or remove cars stored in Supabase.
           </p>
         </div>
         <Badge variant="outline">{cars.length} cars</Badge>

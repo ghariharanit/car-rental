@@ -30,7 +30,7 @@ function formatInr(n: number) {
 
 export default async function MyBookingsPage() {
   const user = await getSessionUser();
-  const rows = user ? getBookingsWithCarForUser(user.id) : [];
+  const rows = user ? await getBookingsWithCarForUser(user.id) : [];
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">

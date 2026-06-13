@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 
 export default async function AdminDashboardPage() {
   const user = await requireAdminUser();
-  const carStats = getCarStats();
-  const bookings = getAllBookingsDetailed();
+  const carStats = await getCarStats();
+  const bookings = await getAllBookingsDetailed();
   const confirmedBookings = bookings.filter((booking) => booking.status === "confirmed").length;
   const latestBooking = bookings[0];
 

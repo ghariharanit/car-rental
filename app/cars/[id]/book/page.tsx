@@ -16,14 +16,14 @@ function todayIsoLocal(): string {
   return `${y}-${m}-${day}`;
 }
 
-export function generateMetadata({ params }: Props): Metadata {
-  const car = getCarById(params.id);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const car = await getCarById(params.id);
   if (!car) return { title: "Book car" };
   return { title: `Book ${car.name}` };
 }
 
 export default async function BookCarPage({ params }: Props) {
-  const car = getCarById(params.id);
+  const car = await getCarById(params.id);
   if (!car) notFound();
 
   return (
@@ -43,8 +43,7 @@ export default async function BookCarPage({ params }: Props) {
       </h1>
       <p className="mt-2 max-w-xl text-sm text-muted-foreground">
         Choose dates for <span className="text-foreground">{car.name}</span>.
-        Your booking is saved to <code className="text-xs">data/bookings.json</code>{" "}
-        (POC).
+        Your booking is saved to Supabase when you confirm.
       </p>
 
       <div className="mt-10">

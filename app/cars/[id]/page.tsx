@@ -19,8 +19,8 @@ function formatInr(n: number) {
 
 type Props = { params: { id: string } };
 
-export function generateMetadata({ params }: Props): Metadata {
-  const car = getCarById(params.id);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const car = await getCarById(params.id);
   if (!car) return { title: "Car not found" };
   return {
     title: car.name,
@@ -29,7 +29,7 @@ export function generateMetadata({ params }: Props): Metadata {
 }
 
 export default async function CarDetailPage({ params }: Props) {
-  const car = getCarById(params.id);
+  const car = await getCarById(params.id);
   if (!car) notFound();
 
   const session = await getSessionUser();

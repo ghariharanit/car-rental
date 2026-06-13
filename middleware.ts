@@ -1,8 +1,5 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { SESSION_COOKIE_NAME } from "@/lib/auth-constants";
-import { verifySessionToken } from "@/lib/session-token";
-import { getAuthSecret } from "@/lib/session-secret";
+import { NextResponse, type NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
 
 function isCarBookPath(pathname: string): boolean {
   return /^\/cars\/[^/]+\/book$/.test(pathname);
@@ -17,65 +14,86 @@ function needsAuthCheck(pathname: string): boolean {
   );
 }
 
+function getUserRole(user: {
+  app_metadata?: Record<string, unknown>;
+}): "user" | "admin" {
+  return user.app_metadata?.role === "admin" ? "admin" : "user";
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (!needsAuthCheck(pathname)) {
-    return NextResponse.next();
+    return updateSession(request);
   }
 
-  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const session = token
-    ? await verifySessionToken(token, getAuthSecret())
-    : null;
+  const supabaseResponse = await updateSession(request);
+  const { createServerClient } = await import("@supabase/ssr");
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    return supabaseResponse;
+  }
+
+  const supabase = createServerClient(url, key, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => {
+          request.cookies.set(name, value);
+        });
+        cookiesToSet.forEach(({ name, value, options }) => {
+          supabaseResponse.cookies.set(name, value, options);
+        });
+      },
+    },
+  });
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const role = user ? getUserRole(user) : null;
 
   if (pathname.startsWith("/login")) {
-    if (session) {
-      const url = request.nextUrl.clone();
-      url.pathname =
-        session.role === "admin" ? "/admin/dashboard" : "/";
-      url.search = "";
-      return NextResponse.redirect(url);
+    if (user) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = role === "admin" ? "/admin/dashboard" : "/";
+      redirectUrl.search = "";
+      return NextResponse.redirect(redirectUrl);
     }
-    return NextResponse.next();
+    return supabaseResponse;
   }
 
   if (pathname.startsWith("/admin")) {
-    if (!session) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(url);
+    if (!user) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/login";
+      redirectUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(redirectUrl);
     }
-    if (session.role !== "admin") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/";
-      return NextResponse.redirect(url);
+    if (role !== "admin") {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/";
+      return NextResponse.redirect(redirectUrl);
     }
-    return NextResponse.next();
+    return supabaseResponse;
   }
 
-  if (pathname.startsWith("/my-bookings")) {
-    if (!session) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(url);
+  if (pathname.startsWith("/my-bookings") || isCarBookPath(pathname)) {
+    if (!user) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/login";
+      redirectUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(redirectUrl);
     }
-    return NextResponse.next();
+    return supabaseResponse;
   }
 
-  if (isCarBookPath(pathname)) {
-    if (!session) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(url);
-    }
-    return NextResponse.next();
-  }
-
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
 export const config = {

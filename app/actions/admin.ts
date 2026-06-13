@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireAdminUser } from "@/lib/admin-auth";
 import { BOOKING_STATUSES, updateBookingStatus } from "@/lib/bookings";
-import type { Car } from "@/lib/data";
+import type { Car } from "@/lib/car-catalog";
 import { createCar, deleteCar, getCarForAdmin, updateCar } from "@/lib/cars-store";
 
 function parseNumber(raw: FormDataEntryValue | null): number {
@@ -74,7 +74,7 @@ export async function createCarAction(formData: FormData) {
     redirect(`/admin/cars?error=${encodeURIComponent(parsed.error)}`);
   }
 
-  createCar(parsed.value);
+  await createCar(parsed.value);
   redirect("/admin/cars?created=1");
 }
 
@@ -91,7 +91,7 @@ export async function updateCarAction(formData: FormData) {
     redirect(`/admin/cars?edit=${id}&error=${encodeURIComponent(parsed.error)}`);
   }
 
-  const updated = updateCar(id, parsed.value);
+  const updated = await updateCar(id, parsed.value);
   if (!updated) {
     redirect("/admin/cars?error=Car%20not%20found");
   }
@@ -107,12 +107,12 @@ export async function deleteCarAction(formData: FormData) {
     redirect("/admin/cars?error=Invalid%20car%20id");
   }
 
-  const car = getCarForAdmin(id);
+  const car = await getCarForAdmin(id);
   if (!car) {
     redirect("/admin/cars?error=Car%20not%20found");
   }
 
-  const deleted = deleteCar(id);
+  const deleted = await deleteCar(id);
   if (!deleted) {
     redirect("/admin/cars?error=Car%20not%20found");
   }
@@ -134,7 +134,7 @@ export async function updateBookingStatusAction(formData: FormData) {
     redirect("/admin/bookings?error=Invalid%20status");
   }
 
-  const updated = updateBookingStatus(
+  const updated = await updateBookingStatus(
     id,
     status as (typeof BOOKING_STATUSES)[number]
   );

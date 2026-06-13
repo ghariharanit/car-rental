@@ -1,55 +1,55 @@
-import { cookies } from "next/headers";
-import usersJson from "@/data/users.json";
-import {
-  SESSION_COOKIE_NAME,
-  SESSION_MAX_AGE,
-} from "@/lib/auth-constants";
-import {
-  createSessionToken,
-  verifySessionToken,
-  type SessionPayload,
-} from "@/lib/session-token";
-import { getAuthSecret } from "@/lib/session-secret";
-
-export type { SessionPayload };
-
-type UserRecord = {
-  id: number;
+export type SessionPayload = {
+  id: string;
   email: string;
-  password: string;
   role: "user" | "admin";
   name: string;
 };
 
-const users = usersJson as UserRecord[];
+function parseRole(value: unknown): "user" | "admin" {
+  return value === "admin" ? "admin" : "user";
+}
 
-export { SESSION_COOKIE_NAME, SESSION_MAX_AGE };
+export function mapSupabaseUser(user: {
+  id: string;
+  email?: string;
+  app_metadata?: Record<string, unknown>;
+  user_metadata?: Record<string, unknown>;
+}): SessionPayload {
+  const name =
+    (typeof user.user_metadata?.name === "string" && user.user_metadata.name) ||
+    user.email?.split("@")[0] ||
+    "User";
 
-export function verifyCredentials(
-  email: string,
-  password: string
-): SessionPayload | null {
-  const normalized = email.trim().toLowerCase();
-  const user = users.find(
-    (u) => u.email.toLowerCase() === normalized && u.password === password
-  );
-  if (!user) return null;
   return {
     id: user.id,
-    email: user.email,
-    role: user.role,
-    name: user.name,
+    email: user.email ?? "",
+    role: parseRole(user.app_metadata?.role),
+    name,
   };
 }
 
 export async function getSessionUser(): Promise<SessionPayload | null> {
-  const raw = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!raw) return null;
-  return verifySessionToken(raw, getAuthSecret());
-}
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export async function createSessionCookieValue(
-  user: SessionPayload
-): Promise<string> {
-  return createSessionToken(user, getAuthSecret());
+  if (!user) {
+    return null;
+  }
+
+  const session = mapSupabaseUser(user);
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.name) {
+    session.name = profile.name;
+  }
+
+  return session;
 }

@@ -1,71 +1,70 @@
 import { describe, expect, it } from "vitest";
 import {
   filterCars,
-  getAllCars,
-  getCarById,
   getDistinctFuels,
   getDistinctSeatCounts,
-} from "./data";
+  type Car,
+} from "./car-catalog";
 
-describe("getAllCars", () => {
-  it("returns a copy so callers cannot mutate the backing list", () => {
-    const a = getAllCars();
-    const b = getAllCars();
-    expect(a).not.toBe(b);
-    expect(a.length).toBeGreaterThan(0);
-  });
-});
-
-describe("getCarById", () => {
-  it("returns a car for numeric string ids", () => {
-    const car = getCarById("1");
-    expect(car).toBeDefined();
-    expect(car?.id).toBe(1);
-  });
-
-  it("returns undefined for invalid id strings", () => {
-    expect(getCarById("abc")).toBeUndefined();
-    expect(getCarById("")).toBeUndefined();
-  });
-
-  it("returns undefined when id does not exist", () => {
-    expect(getCarById(99999)).toBeUndefined();
-  });
-});
+const sampleCars: Car[] = [
+  {
+    id: 1,
+    name: "Maruti Swift",
+    seats: 5,
+    fuel: "Petrol",
+    price: 1650,
+    available: true,
+    images: [],
+    description: "Compact hatch",
+  },
+  {
+    id: 2,
+    name: "Tata Nexon EV",
+    seats: 5,
+    fuel: "Electric",
+    price: 3800,
+    available: true,
+    images: [],
+    description: "Electric SUV",
+  },
+  {
+    id: 3,
+    name: "Toyota Innova Crysta",
+    seats: 7,
+    fuel: "Diesel",
+    price: 4200,
+    available: true,
+    images: [],
+    description: "Family MPV",
+  },
+];
 
 describe("getDistinctFuels / getDistinctSeatCounts", () => {
-  const cars = getAllCars();
-
   it("returns sorted unique fuels", () => {
-    const fuels = getDistinctFuels(cars);
-    expect(fuels).toEqual([...new Set(fuels)].sort());
-    expect(fuels.length).toBeGreaterThan(0);
+    const fuels = getDistinctFuels(sampleCars);
+    expect(fuels).toEqual(["Diesel", "Electric", "Petrol"]);
   });
 
   it("returns sorted unique seat counts", () => {
-    const seats = getDistinctSeatCounts(cars);
-    expect(seats).toEqual([...new Set(seats)].sort((a, b) => a - b));
+    const seats = getDistinctSeatCounts(sampleCars);
+    expect(seats).toEqual([5, 7]);
   });
 });
 
 describe("filterCars", () => {
-  const cars = getAllCars();
-
   it("filters by case-insensitive name substring", () => {
-    const out = filterCars(cars, {
+    const out = filterCars(sampleCars, {
       query: "swift",
       fuel: "all",
       seats: "all",
       maxPrice: "all",
     });
-    expect(out.every((c) => c.name.toLowerCase().includes("swift"))).toBe(
-      true
-    );
-    expect(out.length).toBeGreaterThan(0);
+    expect(out).toHaveLength(1);
+    expect(out[0]?.name).toBe("Maruti Swift");
   });
 
   it("filters by fuel", () => {
-    const out = filterCars(cars, {
+    const out = filterCars(sampleCars, {
       query: "",
       fuel: "Electric",
       seats: "all",
@@ -75,7 +74,7 @@ describe("filterCars", () => {
   });
 
   it("filters by seats", () => {
-    const out = filterCars(cars, {
+    const out = filterCars(sampleCars, {
       query: "",
       fuel: "all",
       seats: "7",
@@ -85,7 +84,7 @@ describe("filterCars", () => {
   });
 
   it("filters by max price cap", () => {
-    const out = filterCars(cars, {
+    const out = filterCars(sampleCars, {
       query: "",
       fuel: "all",
       seats: "all",
@@ -95,7 +94,7 @@ describe("filterCars", () => {
   });
 
   it("returns empty when nothing matches", () => {
-    const out = filterCars(cars, {
+    const out = filterCars(sampleCars, {
       query: "zzznomatchzzz",
       fuel: "all",
       seats: "all",

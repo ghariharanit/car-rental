@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Car } from "@/lib/data";
+import type { Car } from "@/lib/car-catalog";
 import {
   filterCars,
   getDistinctFuels,
   getDistinctSeatCounts,
-} from "@/lib/data";
+} from "@/lib/car-catalog";
 import { CarCard } from "@/components/car-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

@@ -21,8 +21,8 @@ export default async function LoginPage({ searchParams }: Props) {
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
       <h1 className="text-3xl font-bold tracking-tight">Login</h1>
       <p className="mt-3 max-w-xl text-muted-foreground">
-        Sign in with a demo account. Sessions use a signed HTTP-only cookie (POC
-        only, not production-grade security).
+        Sign in with a demo account backed by Supabase Auth. Demo credentials
+        are seeded for local development.
       </p>
       <LoginForm callbackUrl={callbackUrl} />
     </div>

@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // The app persists to shared JSON files during E2E, so keep runs serial.
+  // Bookings mutate shared Supabase data during E2E, so keep runs serial.
   workers: 1,
   reporter: [
     process.env.CI ? ["github"] : ["list"],

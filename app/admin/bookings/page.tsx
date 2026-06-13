@@ -29,7 +29,7 @@ function formatInr(n: number) {
 
 export default async function AdminBookingsPage() {
   await requireAdminUser();
-  const bookings = getAllBookingsDetailed();
+  const bookings = await getAllBookingsDetailed();
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12">

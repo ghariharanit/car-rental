@@ -1,13 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
-
-import { getCarById } from "@/lib/data";
-import { readCars } from "@/lib/cars-store";
-import usersJson from "@/data/users.json";
+import { createClient } from "@/lib/supabase/server";
 
 export type Booking = {
   id: number;
-  userId: number;
+  userId: string;
   carId: number;
   pickupDate: string;
   returnDate: string;
@@ -23,55 +18,106 @@ export const BOOKING_STATUSES = [
   "cancelled",
 ] as const;
 
-const BOOKINGS_FILE = path.join(process.cwd(), "data", "bookings.json");
-const users = usersJson as Array<{
+type BookingRow = {
   id: number;
-  email: string;
-  name: string;
-}>;
+  user_id: string;
+  car_id: number;
+  pickup_date: string;
+  return_date: string;
+  total_price: number;
+  status: string;
+};
 
-function writeBookings(bookings: Booking[]) {
-  fs.writeFileSync(
-    BOOKINGS_FILE,
-    `${JSON.stringify(bookings, null, 2)}\n`,
-    "utf-8"
-  );
+function mapBookingRow(row: BookingRow): Booking {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    carId: row.car_id,
+    pickupDate: row.pickup_date,
+    returnDate: row.return_date,
+    totalPrice: row.total_price,
+    status: row.status,
+  };
 }
 
-export function readBookings(): Booking[] {
-  const raw = fs.readFileSync(BOOKINGS_FILE, "utf-8");
-  const data = JSON.parse(raw) as unknown;
-  if (!Array.isArray(data)) return [];
-  return data as Booking[];
+export async function readBookings(): Promise<Booking[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*")
+    .order("id", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to load bookings: ${error.message}`);
+  }
+
+  return (data ?? []).map(mapBookingRow);
 }
 
-export function getBookingsForUser(userId: number): Booking[] {
-  return readBookings()
-    .filter((b) => b.userId === userId)
-    .sort((a, b) => b.id - a.id);
+export async function getBookingsForUser(userId: string): Promise<Booking[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*")
+    .eq("user_id", userId)
+    .order("id", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to load bookings: ${error.message}`);
+  }
+
+  return (data ?? []).map(mapBookingRow);
 }
 
 export type BookingWithCar = Booking & { carName: string };
 
-export function getBookingsWithCarForUser(userId: number): BookingWithCar[] {
-  return getBookingsForUser(userId).map((b) => {
-    const car = getCarById(b.carId);
+export async function getBookingsWithCarForUser(
+  userId: string
+): Promise<BookingWithCar[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*, cars(name)")
+    .eq("user_id", userId)
+    .order("id", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to load bookings: ${error.message}`);
+  }
+
+  return (data ?? []).map((row) => {
+    const cars = row.cars as { name: string } | { name: string }[] | null;
+    const carName = Array.isArray(cars)
+      ? cars[0]?.name
+      : cars?.name;
+
     return {
-      ...b,
-      carName: car?.name ?? `Car #${b.carId}`,
+      ...mapBookingRow(row as BookingRow),
+      carName: carName ?? `Car #${row.car_id}`,
     };
   });
 }
 
-export function appendBooking(row: Omit<Booking, "id">): Booking {
-  const bookings = readBookings();
-  const nextId = bookings.length
-    ? Math.max(...bookings.map((b) => b.id)) + 1
-    : 1;
-  const created: Booking = { ...row, id: nextId };
-  bookings.push(created);
-  writeBookings(bookings);
-  return created;
+export async function appendBooking(row: Omit<Booking, "id">): Promise<Booking> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .insert({
+      user_id: row.userId,
+      car_id: row.carId,
+      pickup_date: row.pickupDate,
+      return_date: row.returnDate,
+      total_price: row.totalPrice,
+      status: row.status,
+    })
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Failed to create booking: ${error?.message ?? "unknown"}`);
+  }
+
+  return mapBookingRow(data);
 }
 
 export type AdminBookingRow = Booking & {
@@ -80,41 +126,51 @@ export type AdminBookingRow = Booking & {
   carName: string;
 };
 
-export function getAllBookingsDetailed(): AdminBookingRow[] {
-  const cars = readCars();
+export async function getAllBookingsDetailed(): Promise<AdminBookingRow[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*, cars(name), profiles(name, email)")
+    .order("id", { ascending: false });
 
-  return readBookings()
-    .map((booking) => {
-      const user = users.find((entry) => entry.id === booking.userId);
-      const car = cars.find((entry) => entry.id === booking.carId);
-
-      return {
-        ...booking,
-        userEmail: user?.email ?? `user-${booking.userId}@unknown`,
-        userName: user?.name ?? `User #${booking.userId}`,
-        carName: car?.name ?? `Car #${booking.carId}`,
-      };
-    })
-    .sort((a, b) => b.id - a.id);
-}
-
-export function updateBookingStatus(
-  id: number,
-  status: (typeof BOOKING_STATUSES)[number]
-): Booking | null {
-  const bookings = readBookings();
-  const index = bookings.findIndex((booking) => booking.id === id);
-
-  if (index === -1) {
-    return null;
+  if (error) {
+    throw new Error(`Failed to load bookings: ${error.message}`);
   }
 
-  const updated = {
-    ...bookings[index],
-    status,
-  };
+  return (data ?? []).map((row) => {
+    const cars = row.cars as { name: string } | { name: string }[] | null;
+    const profiles = row.profiles as
+      | { name: string; email: string | null }
+      | { name: string; email: string | null }[]
+      | null;
+    const carName = Array.isArray(cars) ? cars[0]?.name : cars?.name;
+    const profile = Array.isArray(profiles) ? profiles[0] : profiles;
+    const booking = mapBookingRow(row as BookingRow);
 
-  bookings[index] = updated;
-  writeBookings(bookings);
-  return updated;
+    return {
+      ...booking,
+      userEmail: profile?.email ?? `user-${booking.userId.slice(0, 8)}@unknown`,
+      userName: profile?.name ?? `User ${booking.userId.slice(0, 8)}`,
+      carName: carName ?? `Car #${booking.carId}`,
+    };
+  });
+}
+
+export async function updateBookingStatus(
+  id: number,
+  status: (typeof BOOKING_STATUSES)[number]
+): Promise<Booking | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .update({ status })
+    .eq("id", id)
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to update booking: ${error.message}`);
+  }
+
+  return data ? mapBookingRow(data) : null;
 }

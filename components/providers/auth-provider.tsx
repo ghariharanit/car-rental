@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { SessionPayload } from "@/lib/session-token";
+import type { SessionPayload } from "@/lib/auth";
 
 type AuthContextValue = {
   user: SessionPayload | null;
