@@ -13,9 +13,46 @@ OUTPUT = ROOT / "docs" / "driveease-project-report.docx"
 SCREENSHOTS_DIR = ROOT / "docs" / "screenshots"
 
 FONT = "Times New Roman"
+CODE_FONT = "Courier New"
 SECTION_SIZE = Pt(24)
 BODY_SIZE = Pt(12)
 HEADING_SIZE = Pt(14)
+CODE_SIZE = Pt(7)
+SOURCE_TARGET_LINES = 1050
+
+# Important project source files (order preserved; ~20 pages at CODE_SIZE).
+SOURCE_MANIFEST = [
+    ("middleware.ts", "Application middleware — session refresh and route guards"),
+    ("app/actions/auth.ts", "Server Actions — login and logout"),
+    ("app/actions/booking.ts", "Server Action — create booking"),
+    ("app/actions/admin.ts", "Server Actions — admin car CRUD and booking status"),
+    ("lib/supabase/server.ts", "Supabase client for Server Components and Actions"),
+    ("lib/supabase/middleware.ts", "Supabase session refresh in middleware"),
+    ("lib/supabase/admin.ts", "Supabase service-role client (seed script only)"),
+    ("lib/auth.ts", "Map Supabase user to session payload"),
+    ("lib/data.ts", "Read car catalog from Supabase"),
+    ("lib/bookings.ts", "Booking queries, joins, and inserts"),
+    ("lib/cars-store.ts", "Admin car create, update, delete"),
+    ("lib/booking-math.ts", "Rental day count and total price calculation"),
+    ("lib/car-catalog.ts", "Client-safe catalog filter helpers"),
+    ("lib/admin-auth.ts", "Admin layout authorization guard"),
+    ("supabase/migrations/001_initial_schema.sql", "PostgreSQL schema, RLS policies, profile trigger"),
+    ("app/layout.tsx", "Root layout — navbar, footer, auth provider"),
+    ("app/page.tsx", "Home page"),
+    ("app/cars/page.tsx", "Car catalog page"),
+    ("app/cars/[id]/page.tsx", "Car detail page"),
+    ("app/cars/[id]/book/page.tsx", "Booking form page"),
+    ("app/login/page.tsx", "Login page"),
+    ("app/my-bookings/page.tsx", "User booking history"),
+    ("components/navbar.tsx", "Site navigation bar"),
+    ("components/login-form.tsx", "Login form component"),
+    ("components/cars-catalog.tsx", "Catalog grid and filters"),
+    ("components/car-booking-form.tsx", "Booking form component"),
+    ("app/admin/layout.tsx", "Admin panel layout"),
+    ("app/admin/dashboard/page.tsx", "Admin dashboard statistics"),
+    ("app/admin/bookings/page.tsx", "Admin bookings management"),
+    ("app/admin/cars/page.tsx", "Admin cars CRUD"),
+]
 
 
 def set_run_font(run, size=BODY_SIZE, bold=False):
@@ -96,6 +133,63 @@ def add_figure(doc, filename, caption):
     else:
         add_body(doc, f"[Insert screenshot: docs/screenshots/{filename}]")
     doc.add_paragraph()
+
+
+def add_source_code_file(doc, relative_path, description, content_lines):
+    p = doc.add_paragraph()
+    run = p.add_run(relative_path)
+    set_run_font(run, size=Pt(9), bold=True)
+    p.paragraph_format.space_before = Pt(8)
+    p.paragraph_format.space_after = Pt(2)
+
+    if description:
+        add_body(doc, description)
+
+    code = "\n".join(content_lines)
+    code_p = doc.add_paragraph()
+    code_p.paragraph_format.line_spacing = 1.0
+    code_p.paragraph_format.space_after = Pt(6)
+    code_p.paragraph_format.left_indent = Pt(0)
+    code_run = code_p.add_run(code)
+    code_run.font.name = CODE_FONT
+    code_run.font.size = CODE_SIZE
+    code_run._element.rPr.rFonts.set(qn("w:eastAsia"), CODE_FONT)
+
+
+def add_appendix_source_code(doc):
+    add_subheading(doc, "Appendix G — Source Code")
+    add_body(
+        doc,
+        "The following listings contain the principal source files used to implement "
+        "DriveEase. Code is reproduced from the project repository at small font size "
+        "for reference (approximately 20 pages).",
+    )
+
+    lines_used = 0
+    for relative_path, description in SOURCE_MANIFEST:
+        if lines_used >= SOURCE_TARGET_LINES:
+            break
+
+        file_path = ROOT / relative_path
+        if not file_path.exists():
+            add_body(doc, f"[File not found: {relative_path}]")
+            continue
+
+        all_lines = file_path.read_text(encoding="utf-8").splitlines()
+        remaining = SOURCE_TARGET_LINES - lines_used
+        if remaining <= 0:
+            break
+
+        included_count = min(len(all_lines), remaining)
+        chunk = all_lines[:included_count]
+        if included_count < len(all_lines):
+            chunk = chunk + ["", "// ... remainder truncated for report length ..."]
+
+        add_source_code_file(doc, relative_path, description, chunk)
+        lines_used += included_count
+
+    add_body(doc, f"Total source lines included: {lines_used}.")
+    add_page_break(doc)
 
 
 def build_document():
@@ -202,11 +296,10 @@ def build_document():
             ("10", "System Testing", ""),
             ("11", "System Implementation", ""),
             ("11.6", "Network Privacy (Browser vs Server)", ""),
-            ("11.7", "Source Code Repository", ""),
             ("12", "Conclusion and Future Enhancement", ""),
             ("13", "Appendix", ""),
-            ("13.1", "Appendix G — Application Screenshots", ""),
-            ("13.2", "Appendix J — Source Code Listing", ""),
+            ("13.1", "Appendix G — Source Code", ""),
+            ("13.2", "Appendix H — Application Screenshots", ""),
             ("14", "Bibliography and References", ""),
         ],
     )
@@ -781,29 +874,6 @@ def build_document():
         "Network tab shows requests only to the application domain. Session cookies are "
         "HTTP-only. External requests are primarily Unsplash image URLs for car photos.",
     )
-
-    add_subheading(doc, "11.7 Source Code Repository")
-    add_table(
-        doc,
-        ["Item", "Location"],
-        [
-            ("Primary repository", "https://github.com/ghariharanit/car-rental"),
-            ("Main branch", "main — Supabase-backed application and documentation"),
-            (
-                "Collaboration branch",
-                "https://github.com/sabareesh0609/car-rental/tree/backend-integration",
-            ),
-            ("Documentation", "docs/driveease-project-report.md, .docx"),
-            ("Database setup", "supabase/migrations/"),
-            ("Screenshots", "docs/screenshots/ (Appendix G)"),
-        ],
-    )
-    add_body(
-        doc,
-        "Clone with git clone, configure .env.local from .env.local.example, apply SQL "
-        "migrations, run npm run seed, then npm run dev. Refresh report screenshots with "
-        "npm run screenshots:report while the dev server is running.",
-    )
     add_page_break(doc)
 
     # CONCLUSION
@@ -903,7 +973,9 @@ def build_document():
     add_bullet(doc, "2 sample bookings for demo user.")
     add_bullet(doc, "Fuel breakdown: 4 Petrol, 3 Diesel, 2 Electric, 1 Hybrid.")
 
-    add_subheading(doc, "Appendix G — Application Screenshots")
+    add_appendix_source_code(doc)
+
+    add_subheading(doc, "Appendix H — Application Screenshots")
     add_body(
         doc,
         "UI screenshots from http://localhost:3000 with seeded Supabase demo data. "
@@ -913,37 +985,37 @@ def build_document():
         doc,
         ["Fig.", "Screen", "Route", "File"],
         [
-            ("G.1", "Home page", "/", "01-home.png"),
-            ("G.2", "Cars catalog", "/cars", "02-cars-catalog.png"),
-            ("G.3", "Car detail", "/cars/1", "03-car-detail.png"),
-            ("G.4", "Login", "/login", "04-login.png"),
-            ("G.5", "My Bookings", "/my-bookings", "05-my-bookings.png"),
-            ("G.6", "Booking form", "/cars/1/book", "06-booking-form.png"),
-            ("G.7", "Admin dashboard", "/admin/dashboard", "07-admin-dashboard.png"),
-            ("G.8", "Admin cars", "/admin/cars", "08-admin-cars.png"),
-            ("G.9", "Admin bookings", "/admin/bookings", "09-admin-bookings.png"),
+            ("H.1", "Home page", "/", "01-home.png"),
+            ("H.2", "Cars catalog", "/cars", "02-cars-catalog.png"),
+            ("H.3", "Car detail", "/cars/1", "03-car-detail.png"),
+            ("H.4", "Login", "/login", "04-login.png"),
+            ("H.5", "My Bookings", "/my-bookings", "05-my-bookings.png"),
+            ("H.6", "Booking form", "/cars/1/book", "06-booking-form.png"),
+            ("H.7", "Admin dashboard", "/admin/dashboard", "07-admin-dashboard.png"),
+            ("H.8", "Admin cars", "/admin/cars", "08-admin-cars.png"),
+            ("H.9", "Admin bookings", "/admin/bookings", "09-admin-bookings.png"),
         ],
     )
     figures = [
-        ("01-home.png", "Figure G.1 — Home page hero section with Browse Cars button"),
-        ("02-cars-catalog.png", "Figure G.2 — Cars catalog with search and filters"),
-        ("03-car-detail.png", "Figure G.3 — Car detail with image gallery"),
-        ("04-login.png", "Figure G.4 — Login page"),
-        ("05-my-bookings.png", "Figure G.5 — My Bookings table"),
-        ("06-booking-form.png", "Figure G.6 — Booking form with date pickers"),
-        ("07-admin-dashboard.png", "Figure G.7 — Admin dashboard statistics"),
-        ("08-admin-cars.png", "Figure G.8 — Admin cars management"),
-        ("09-admin-bookings.png", "Figure G.9 — Admin bookings management"),
+        ("01-home.png", "Figure H.1 — Home page hero section with Browse Cars button"),
+        ("02-cars-catalog.png", "Figure H.2 — Cars catalog with search and filters"),
+        ("03-car-detail.png", "Figure H.3 — Car detail with image gallery"),
+        ("04-login.png", "Figure H.4 — Login page"),
+        ("05-my-bookings.png", "Figure H.5 — My Bookings table"),
+        ("06-booking-form.png", "Figure H.6 — Booking form with date pickers"),
+        ("07-admin-dashboard.png", "Figure H.7 — Admin dashboard statistics"),
+        ("08-admin-cars.png", "Figure H.8 — Admin cars management"),
+        ("09-admin-bookings.png", "Figure H.9 — Admin bookings management"),
     ]
     for filename, caption in figures:
         add_figure(doc, filename, caption)
     add_body(
         doc,
-        "Figures G.10 (Supabase Table Editor) and G.11 (Vercel deployment) should be "
+        "Figures H.10 (Supabase Table Editor) and H.11 (Vercel deployment) should be "
         "captured manually as 10-supabase-tables.png and 11-vercel-deploy.png.",
     )
 
-    add_subheading(doc, "Appendix H — Glossary")
+    add_subheading(doc, "Appendix I — Glossary")
     glossary = [
         "RLS — Row Level Security; PostgreSQL row filtering per user",
         "Server Component — React component rendered on the Next.js server",
@@ -954,7 +1026,7 @@ def build_document():
     for item in glossary:
         add_bullet(doc, item)
 
-    add_subheading(doc, "Appendix I — npm Scripts Reference")
+    add_subheading(doc, "Appendix J — npm Scripts Reference")
     add_table(
         doc,
         ["Command", "Description"],
@@ -965,37 +1037,10 @@ def build_document():
             ("npm run lint", "Run ESLint"),
             ("npm run test", "Run Vitest unit tests"),
             ("npm run seed", "Seed Supabase demo users, cars, bookings"),
-            ("npm run screenshots:report", "Capture UI screenshots for Appendix G"),
+            ("npm run screenshots:report", "Capture UI screenshots for Appendix H"),
             ("npm run test:e2e", "Run Playwright e2e tests"),
         ],
     )
-
-    add_subheading(doc, "Appendix J — Source Code Listing")
-    add_body(
-        doc,
-        "Main source files for DriveEase. Full repository: "
-        "https://github.com/ghariharanit/car-rental (branch main).",
-    )
-    add_table(
-        doc,
-        ["Layer", "Path", "Description"],
-        [
-            ("Routes", "app/page.tsx", "Home page"),
-            ("Routes", "app/cars/", "Catalog and car detail pages"),
-            ("Routes", "app/admin/", "Admin dashboard, cars, bookings"),
-            ("Server Actions", "app/actions/", "Auth, booking, admin mutations"),
-            ("Middleware", "middleware.ts", "Session refresh and route guards"),
-            ("Supabase", "lib/supabase/", "Server, middleware, admin clients"),
-            ("Data", "lib/data.ts, lib/bookings.ts", "Supabase read/write helpers"),
-            ("Database", "supabase/migrations/", "Schema and RLS SQL"),
-            ("Seed", "scripts/seed-supabase.ts", "Demo users, cars, bookings"),
-            ("Tests", "e2e/, lib/*.test.ts", "Playwright and Vitest tests"),
-            ("Docs", "docs/, scripts/generate-project-doc.py", "Report and generator"),
-        ],
-    )
-    add_body(doc, "Representative excerpt — middleware.ts:")
-    add_body(doc, "export async function middleware(request) { return await updateSession(request); }")
-    add_body(doc, "Representative excerpt — createBookingAction validates session before Supabase insert.")
     add_page_break(doc)
 
     # BIBLIOGRAPHY
