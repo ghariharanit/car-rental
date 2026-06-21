@@ -10,6 +10,7 @@ from docx.shared import Inches, Pt
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = ROOT / "docs" / "driveease-project-report.docx"
+SCREENSHOTS_DIR = ROOT / "docs" / "screenshots"
 
 FONT = "Times New Roman"
 SECTION_SIZE = Pt(24)
@@ -81,6 +82,20 @@ def add_table(doc, headers, rows):
                     set_run_font(run)
     doc.add_paragraph()
     return table
+
+
+def add_figure(doc, filename, caption):
+    """Embed a screenshot if present; otherwise leave a placeholder caption."""
+    add_body(doc, caption)
+    image_path = SCREENSHOTS_DIR / filename
+    if image_path.exists():
+        paragraph = doc.add_paragraph()
+        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = paragraph.add_run()
+        run.add_picture(str(image_path), width=Inches(5.75))
+    else:
+        add_body(doc, f"[Insert screenshot: docs/screenshots/{filename}]")
+    doc.add_paragraph()
 
 
 def build_document():
@@ -186,8 +201,12 @@ def build_document():
             ("9", "Project Description", ""),
             ("10", "System Testing", ""),
             ("11", "System Implementation", ""),
+            ("11.6", "Network Privacy (Browser vs Server)", ""),
+            ("11.7", "Source Code Repository", ""),
             ("12", "Conclusion and Future Enhancement", ""),
             ("13", "Appendix", ""),
+            ("13.1", "Appendix G — Application Screenshots", ""),
+            ("13.2", "Appendix J — Source Code Listing", ""),
             ("14", "Bibliography and References", ""),
         ],
     )
@@ -762,6 +781,29 @@ def build_document():
         "Network tab shows requests only to the application domain. Session cookies are "
         "HTTP-only. External requests are primarily Unsplash image URLs for car photos.",
     )
+
+    add_subheading(doc, "11.7 Source Code Repository")
+    add_table(
+        doc,
+        ["Item", "Location"],
+        [
+            ("Primary repository", "https://github.com/ghariharanit/car-rental"),
+            ("Main branch", "main — Supabase-backed application and documentation"),
+            (
+                "Collaboration branch",
+                "https://github.com/sabareesh0609/car-rental/tree/backend-integration",
+            ),
+            ("Documentation", "docs/driveease-project-report.md, .docx"),
+            ("Database setup", "supabase/migrations/"),
+            ("Screenshots", "docs/screenshots/ (Appendix G)"),
+        ],
+    )
+    add_body(
+        doc,
+        "Clone with git clone, configure .env.local from .env.local.example, apply SQL "
+        "migrations, run npm run seed, then npm run dev. Refresh report screenshots with "
+        "npm run screenshots:report while the dev server is running.",
+    )
     add_page_break(doc)
 
     # CONCLUSION
@@ -861,21 +903,45 @@ def build_document():
     add_bullet(doc, "2 sample bookings for demo user.")
     add_bullet(doc, "Fuel breakdown: 4 Petrol, 3 Diesel, 2 Electric, 1 Hybrid.")
 
-    add_subheading(doc, "Appendix G — Screenshot Placeholders")
-    screenshots = [
-        "Home page — hero section with Browse Cars button",
-        "Cars listing — grid with filters",
-        "Car detail — gallery and Book Now button",
-        "Login page — email and password form",
-        "My Bookings — user booking table",
-        "Admin Dashboard — statistics cards",
-        "Admin Cars — inventory table with create form",
-        "Admin Bookings — status dropdown",
-        "Vercel deployment — production URL",
-        "Supabase dashboard — Table Editor showing cars",
+    add_subheading(doc, "Appendix G — Application Screenshots")
+    add_body(
+        doc,
+        "UI screenshots from http://localhost:3000 with seeded Supabase demo data. "
+        "Regenerate with npm run screenshots:report (requires npm run dev).",
+    )
+    add_table(
+        doc,
+        ["Fig.", "Screen", "Route", "File"],
+        [
+            ("G.1", "Home page", "/", "01-home.png"),
+            ("G.2", "Cars catalog", "/cars", "02-cars-catalog.png"),
+            ("G.3", "Car detail", "/cars/1", "03-car-detail.png"),
+            ("G.4", "Login", "/login", "04-login.png"),
+            ("G.5", "My Bookings", "/my-bookings", "05-my-bookings.png"),
+            ("G.6", "Booking form", "/cars/1/book", "06-booking-form.png"),
+            ("G.7", "Admin dashboard", "/admin/dashboard", "07-admin-dashboard.png"),
+            ("G.8", "Admin cars", "/admin/cars", "08-admin-cars.png"),
+            ("G.9", "Admin bookings", "/admin/bookings", "09-admin-bookings.png"),
+        ],
+    )
+    figures = [
+        ("01-home.png", "Figure G.1 — Home page hero section with Browse Cars button"),
+        ("02-cars-catalog.png", "Figure G.2 — Cars catalog with search and filters"),
+        ("03-car-detail.png", "Figure G.3 — Car detail with image gallery"),
+        ("04-login.png", "Figure G.4 — Login page"),
+        ("05-my-bookings.png", "Figure G.5 — My Bookings table"),
+        ("06-booking-form.png", "Figure G.6 — Booking form with date pickers"),
+        ("07-admin-dashboard.png", "Figure G.7 — Admin dashboard statistics"),
+        ("08-admin-cars.png", "Figure G.8 — Admin cars management"),
+        ("09-admin-bookings.png", "Figure G.9 — Admin bookings management"),
     ]
-    for i, s in enumerate(screenshots, 1):
-        add_bullet(doc, f"{i}. {s}")
+    for filename, caption in figures:
+        add_figure(doc, filename, caption)
+    add_body(
+        doc,
+        "Figures G.10 (Supabase Table Editor) and G.11 (Vercel deployment) should be "
+        "captured manually as 10-supabase-tables.png and 11-vercel-deploy.png.",
+    )
 
     add_subheading(doc, "Appendix H — Glossary")
     glossary = [
@@ -899,9 +965,37 @@ def build_document():
             ("npm run lint", "Run ESLint"),
             ("npm run test", "Run Vitest unit tests"),
             ("npm run seed", "Seed Supabase demo users, cars, bookings"),
+            ("npm run screenshots:report", "Capture UI screenshots for Appendix G"),
             ("npm run test:e2e", "Run Playwright e2e tests"),
         ],
     )
+
+    add_subheading(doc, "Appendix J — Source Code Listing")
+    add_body(
+        doc,
+        "Main source files for DriveEase. Full repository: "
+        "https://github.com/ghariharanit/car-rental (branch main).",
+    )
+    add_table(
+        doc,
+        ["Layer", "Path", "Description"],
+        [
+            ("Routes", "app/page.tsx", "Home page"),
+            ("Routes", "app/cars/", "Catalog and car detail pages"),
+            ("Routes", "app/admin/", "Admin dashboard, cars, bookings"),
+            ("Server Actions", "app/actions/", "Auth, booking, admin mutations"),
+            ("Middleware", "middleware.ts", "Session refresh and route guards"),
+            ("Supabase", "lib/supabase/", "Server, middleware, admin clients"),
+            ("Data", "lib/data.ts, lib/bookings.ts", "Supabase read/write helpers"),
+            ("Database", "supabase/migrations/", "Schema and RLS SQL"),
+            ("Seed", "scripts/seed-supabase.ts", "Demo users, cars, bookings"),
+            ("Tests", "e2e/, lib/*.test.ts", "Playwright and Vitest tests"),
+            ("Docs", "docs/, scripts/generate-project-doc.py", "Report and generator"),
+        ],
+    )
+    add_body(doc, "Representative excerpt — middleware.ts:")
+    add_body(doc, "export async function middleware(request) { return await updateSession(request); }")
+    add_body(doc, "Representative excerpt — createBookingAction validates session before Supabase insert.")
     add_page_break(doc)
 
     # BIBLIOGRAPHY

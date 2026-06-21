@@ -17,8 +17,8 @@ export default function HomePage() {
           Find Your Perfect Rental Car
         </h1>
         <p className="mt-6 max-w-xl text-pretty text-lg text-muted-foreground">
-          Browse our fleet, compare daily rates, and book in minutes — starting
-          with this Phase 1 shell; listings arrive in Phase 2.
+          Browse our fleet, compare daily rates, and book in minutes — fast,
+          simple, and secure.
         </p>
         <Link
           href="/cars"

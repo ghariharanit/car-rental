@@ -87,8 +87,11 @@ I extend my thanks to my family and friends for their constant motivation, patie
 | 11.4 | Supabase Project Setup (Step-by-Step) | |
 | 11.5 | Vercel Deployment Guide | |
 | 11.6 | Network Privacy (Browser vs Server) | |
+| 11.7 | Source Code Repository | |
 | 12 | Conclusion and Future Enhancement | |
 | 13 | Appendix | |
+| 13.1 | Appendix G — Application Screenshots | |
+| 13.2 | Appendix J — Source Code Listing | |
 | 14 | Bibliography and References | |
 
 ---
@@ -963,6 +966,34 @@ DriveEase is designed so the client browser does not expose Supabase API traffic
 
 This architecture protects database access patterns from inspection in browser DevTools and aligns with production best practices for Supabase + Next.js applications.
 
+### 11.7 Source Code Repository
+
+The complete DriveEase source code is maintained in Git with version history, branch-based collaboration, and no credentials committed to the repository (environment variables are loaded from `.env.local`, which is listed in `.gitignore`). User-facing pages use demo-ready product copy in `app/page.tsx`, `components/footer.tsx`, and `app/login/page.tsx` with no POC or phase labels.
+
+| Item | Location |
+|------|----------|
+| Primary repository | https://github.com/ghariharanit/car-rental |
+| Main branch | `main` — latest Supabase-backed application and documentation |
+| Collaboration branch | https://github.com/sabareesh0609/car-rental/tree/backend-integration |
+| Documentation | `docs/driveease-project-report.md`, `docs/driveease-project-report.docx` |
+| Database setup | `supabase/migrations/` |
+| Demo data seed | `scripts/seed-supabase.ts`, `scripts/seed-data/` |
+| Application screenshots | `docs/screenshots/` (see Appendix G) |
+
+**Clone and run:**
+
+```bash
+git clone https://github.com/ghariharanit/car-rental.git
+cd car-rental
+npm install
+cp .env.local.example .env.local
+# Apply supabase/migrations SQL, then:
+npm run seed
+npm run dev
+```
+
+Capture or refresh report screenshots with `npm run screenshots:report` while the dev server is running on port 3000.
+
 ---
 
 ## CONCLUSION AND FUTURE ENHANCEMENT
@@ -1088,20 +1119,61 @@ CREATE TABLE public.bookings (
 | Electric cars | 2 | Tata Nexon EV, MG ZS EV |
 | Hybrid cars | 1 | Toyota Camry Hybrid |
 
-### Appendix G — Screenshot Placeholders
+### Appendix G — Application Screenshots
 
-Insert screenshots from http://localhost:3000 or Vercel deployment:
+The following figures show the DriveEase user interface captured from a running local instance (`http://localhost:3000`) with seeded Supabase demo data. Screenshots are stored under `docs/screenshots/` and embedded in this report. Regenerate them with `npm run screenshots:report` (requires `npm run dev` and Playwright browsers).
 
-1. Home page — hero section with Browse Cars button
-2. Cars listing — grid with filter controls applied
-3. Car detail — image gallery and Book Now button
-4. Login page — email/password form with demo hint
-5. My Bookings — user booking table with status badges
-6. Admin Dashboard — statistics cards and latest booking
-7. Admin Cars — inventory table with create form
-8. Admin Bookings — status dropdown on booking row
-9. Vercel deployment — production URL in browser
-10. Supabase dashboard — Table Editor showing cars rows
+| Fig. | Screen | Route | Source file |
+|------|--------|-------|-------------|
+| G.1 | Home page — hero and Browse Cars CTA | `/` | `docs/screenshots/01-home.png` |
+| G.2 | Cars catalog — grid and filters | `/cars` | `docs/screenshots/02-cars-catalog.png` |
+| G.3 | Car detail — gallery and Book Now | `/cars/1` | `docs/screenshots/03-car-detail.png` |
+| G.4 | Login page — email/password form | `/login` | `docs/screenshots/04-login.png` |
+| G.5 | My Bookings — user reservation table | `/my-bookings` | `docs/screenshots/05-my-bookings.png` |
+| G.6 | Booking form — date pickers and price | `/cars/1/book` | `docs/screenshots/06-booking-form.png` |
+| G.7 | Admin dashboard — statistics cards | `/admin/dashboard` | `docs/screenshots/07-admin-dashboard.png` |
+| G.8 | Admin cars — fleet CRUD table | `/admin/cars` | `docs/screenshots/08-admin-cars.png` |
+| G.9 | Admin bookings — status management | `/admin/bookings` | `docs/screenshots/09-admin-bookings.png` |
+| G.10 | Supabase Table Editor (manual capture) | Supabase Dashboard | `docs/screenshots/10-supabase-tables.png` |
+| G.11 | Vercel production deployment (manual capture) | Production URL | `docs/screenshots/11-vercel-deploy.png` |
+
+**Figure G.1 — Home page**
+
+![Home page hero section with Browse Cars button](screenshots/01-home.png)
+
+**Figure G.2 — Cars catalog**
+
+![Car listing grid with search and filter controls](screenshots/02-cars-catalog.png)
+
+**Figure G.3 — Car detail**
+
+![Car detail page with image gallery and Book Now button](screenshots/03-car-detail.png)
+
+**Figure G.4 — Login**
+
+![Login page with email and password fields](screenshots/04-login.png)
+
+**Figure G.5 — My Bookings**
+
+![User booking history table with status badges](screenshots/05-my-bookings.png)
+
+**Figure G.6 — Booking form**
+
+![Booking form with pickup and return date inputs](screenshots/06-booking-form.png)
+
+**Figure G.7 — Admin dashboard**
+
+![Admin dashboard with car and booking statistics](screenshots/07-admin-dashboard.png)
+
+**Figure G.8 — Admin cars**
+
+![Admin cars management table and create form](screenshots/08-admin-cars.png)
+
+**Figure G.9 — Admin bookings**
+
+![Admin bookings table with status dropdown](screenshots/09-admin-bookings.png)
+
+*Figures G.10 and G.11: capture manually from the Supabase Dashboard (Table Editor → `cars`) and the Vercel deployment URL, then save as `10-supabase-tables.png` and `11-vercel-deploy.png` in `docs/screenshots/`.*
 
 ### Appendix H — Glossary
 
@@ -1124,8 +1196,72 @@ Insert screenshots from http://localhost:3000 or Vercel deployment:
 | `npm run lint` | Run ESLint on source files |
 | `npm run test` | Run Vitest unit tests |
 | `npm run seed` | Seed Supabase with demo users, cars, bookings |
+| `npm run screenshots:report` | Capture UI screenshots for project report (Appendix G) |
 | `npm run test:e2e` | Run Playwright browser tests |
 | `npm run test:e2e:ui` | Open Playwright interactive UI mode |
+
+### Appendix J — Source Code Listing
+
+This appendix summarizes the main source directories and entry-point files for the DriveEase application. Full source is available at https://github.com/ghariharanit/car-rental (branch `main`).
+
+| Layer | Path | Description |
+|-------|------|-------------|
+| Routes | `app/page.tsx` | Home page with hero section |
+| Routes | `app/cars/page.tsx`, `app/cars/[id]/page.tsx` | Public catalog and car detail |
+| Routes | `app/cars/[id]/book/page.tsx` | Authenticated booking form |
+| Routes | `app/login/page.tsx` | Login page |
+| Routes | `app/my-bookings/page.tsx` | User booking history |
+| Routes | `app/admin/dashboard/page.tsx` | Admin statistics dashboard |
+| Routes | `app/admin/cars/page.tsx` | Admin fleet CRUD |
+| Routes | `app/admin/bookings/page.tsx` | Admin booking management |
+| Server Actions | `app/actions/auth.ts` | `loginAction`, `logoutAction` |
+| Server Actions | `app/actions/booking.ts` | `createBookingAction` |
+| Server Actions | `app/actions/admin.ts` | Car CRUD and booking status updates |
+| Auth & session | `middleware.ts` | Route guards and session refresh |
+| Auth & session | `lib/auth.ts` | Map Supabase user to session payload |
+| Supabase clients | `lib/supabase/server.ts` | Server Component / Action client |
+| Supabase clients | `lib/supabase/middleware.ts` | Cookie session refresh |
+| Supabase clients | `lib/supabase/admin.ts` | Service-role client for seeding only |
+| Data access | `lib/data.ts` | Read cars from Supabase |
+| Data access | `lib/cars-store.ts` | Admin car mutations |
+| Data access | `lib/bookings.ts` | Booking queries and inserts |
+| Pure helpers | `lib/car-catalog.ts` | Client-safe filter functions |
+| Pure helpers | `lib/booking-math.ts` | Rental days and total price |
+| UI components | `components/cars-catalog.tsx` | Catalog grid and filters |
+| UI components | `components/login-form.tsx` | Login form UI |
+| UI components | `components/car-booking-form.tsx` | Booking form UI |
+| UI components | `components/admin/` | Admin navigation and toasts |
+| Database | `supabase/migrations/001_initial_schema.sql` | Tables, RLS, profile trigger |
+| Database | `supabase/migrations/002_profile_email_and_seed_helpers.sql` | Email column, seed helpers |
+| Seed | `scripts/seed-supabase.ts` | Demo users, cars, bookings |
+| Tests | `lib/data.test.ts`, `lib/bookings.test.ts` | Vitest unit tests |
+| Tests | `e2e/*.spec.ts` | Playwright end-to-end tests |
+| Docs | `docs/driveease-project-report.md` | Project report (Markdown) |
+| Docs | `scripts/generate-project-doc.py` | Word report generator |
+| Docs | `scripts/capture-report-screenshots.ts` | Screenshot capture for Appendix G |
+
+**Representative source — middleware route protection:**
+
+```typescript
+// middleware.ts (excerpt) — refresh session and guard protected routes
+export async function middleware(request: NextRequest) {
+  return await updateSession(request);
+}
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+};
+```
+
+**Representative source — booking Server Action:**
+
+```typescript
+// app/actions/booking.ts (excerpt) — validate session and insert booking
+export async function createBookingAction(formData: FormData) {
+  const user = await getSessionUser();
+  if (!user) return { error: "You must be signed in to book." };
+  // ... validate dates, compute total, insert into Supabase bookings
+}
+```
 
 ---
 
